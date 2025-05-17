@@ -8,6 +8,7 @@ import pyloudnorm as pyln
 from typing import List
 from scipy import stats
 
+
 import soundsright.base.utils as Utils
 import soundsright.base.data as Data
 
@@ -461,10 +462,14 @@ def generate_dataset_for_miner(
         n=n,
         for_miner=True
     )
-    
+
     if task.lower() == "denoising":
         if not any(file.endswith(".wav") for file in os.listdir(noise_data_dir)):
             try:
+                Utils.subnet_logger(
+                    severity="DEBUG",
+                    message=f"数据集完成 开始下载denoising",
+                )
                 Data.download_wham(wham_path=noise_data_dir)
             except Exception as e:
                 raise e("Noise dataset download failed.")
@@ -474,6 +479,10 @@ def generate_dataset_for_miner(
     elif task.lower == 'dereverberation': 
         if not any(file.endswith(".wav") for file in os.listdir(reverb_data_dir)):
             try:
+                tils.subnet_logger(
+                    severity="DEBUG",
+                    message=f"数据集完成 开始下载dereverberation",
+                )
                 Data.download_arni(arni_path=reverb_data_dir)
             except Exception as e:
                 raise e("Reverb dataset download failed")
