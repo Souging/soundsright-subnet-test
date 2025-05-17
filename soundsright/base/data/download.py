@@ -3,6 +3,7 @@ import requests
 import zipfile 
 import shutil
 from soundsright.base.utils import subnet_logger 
+from tqdm import tqdm 
 
 def download_arni(arni_path: str, log_level: str = "INFO", partial: bool = False) -> None:
     """Downloads ARNI RIR dataset. [1] 
@@ -46,11 +47,15 @@ def download_arni(arni_path: str, log_level: str = "INFO", partial: bool = False
             # Download the file
             response = requests.get(url, stream=True)
             response.raise_for_status()
-
+            total_size = int(response.headers.get('content-length', 0))
+            block_size = 8192
             # Save the file to disk
             with open(zip_filepath, 'wb') as file:
-                for chunk in response.iter_content(chunk_size=8192):
-                    file.write(chunk)
+                with tqdm(total=total_size, unit='iB', unit_scale=True,
+                          desc=zip_filename) as t:
+                    for chunk in response.iter_content(chunk_size=block_size):
+                        file.write(chunk)
+                        t.update(len(chunk))
 
             # Extract the zip file
             with zipfile.ZipFile(zip_filepath, 'r') as zip_ref:
@@ -107,11 +112,16 @@ def download_wham(wham_path: str, log_level:str = "INFO") -> None:
         with requests.get(url, stream=True) as r:
             r.raise_for_status()  # Check if the request was successful
             # Open a local file in write-binary mode
+            total_size = int(r.headers.get('content-length', 0))
+            block_size = 8192
             with open(file_path, 'wb') as f:
-                # Write the content in chunks
-                for chunk in r.iter_content(chunk_size=8192):
-                    if chunk:  # Filter out keep-alive chunks
-                        f.write(chunk)
+                with tqdm(total=total_size, unit='iB', unit_scale=True,
+                          desc=file_name) as t:
+                    # Write the content in chunks
+                    for chunk in r.iter_content(chunk_size=block_size):
+                        if chunk:  # Filter out keep-alive chunks
+                            f.write(chunk)
+                            t.update(len(chunk))
 
         # Unzip the file
         with zipfile.ZipFile(file_path, 'r') as zip_ref:
