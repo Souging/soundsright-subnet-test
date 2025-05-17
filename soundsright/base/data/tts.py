@@ -4,7 +4,7 @@ from openai import OpenAI
 import librosa
 import soundfile as sf
 from typing import List
-
+from dia.model import Dia
 from soundsright.base.utils import subnet_logger 
 from soundsright.base.templates import (
     TOPICS,
@@ -23,8 +23,8 @@ class TTSHandler:
     def __init__(self, tts_base_path: str, sample_rates: List[int], log_level: str = "INFO"):
         self.tts_base_path = tts_base_path
         self.sample_rates = sample_rates
-        api_key = os.getenv("OPENAI_API_KEY")
-        self.openai_client = OpenAI(api_key=api_key)
+        self.model = Dia.from_pretrained("nari-labs/Dia-1.6B")
+        self.openai_client = OpenAI(base_url="https://openrouter.ai/api/v1",api_key="sk-or-v1-888888888888888888")
         self.openai_voices = ['alloy','echo','fable','onyx','nova','shimmer']
         self.log_level = log_level
 
@@ -55,37 +55,17 @@ class TTSHandler:
             }
         ]
         
-        completion = self.openai_client.chat.completions.create(model='gpt-4o', messages=messages)
+        completion = self.openai_client.chat.completions.create(model='openai/gpt-4o-mini', messages=messages)
+        print(completion)
         return completion.choices[0].message.content
         
     # Generates one output TTS file at correct sample rate
     def _do_single_openai_tts_query(self, tts_file_path: str, sample_rate: int, voice: str = 'random'):
-        # voice control
-        if voice == 'random' or voice not in self.openai_voices:
-            voice = random.choice(self.openai_voices)
-        # define openai call params
-        params = {
-            'model':'tts-1-hd',
-            'voice':voice,
-            'input':self._generate_random_sentence()
-        }
-        # call openai with client 
-        try:
-            response=self.openai_client.audio.speech.create(**params)
-            response.stream_to_file(tts_file_path)
-            subnet_logger(
-                severity="TRACE",
-                message=f"Obtained TTS audio file: {tts_file_path} from OpenAI.",
-                log_level=self.log_level
-            )
-        # raise error if it fails
-        except Exception as e:
-            subnet_logger(
-                severity="ERROR",
-                message="Could not get TTS audio file from OpenAI, please check configuration.",
-                log_level=self.log_level
-            )
+
         # resample in place if necessary
+        text = self._generate_random_sentence()
+        output = self.model.generate(text)
+        self.model.save_audio(tts_file_path, output)
         try:
             # Load the generated TTS audio file
             audio_data, sr = librosa.load(tts_file_path, sr=None)
