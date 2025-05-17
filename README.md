@@ -33,7 +33,7 @@ For more details about sample rates, tasks and metrics, please reference the [co
 <h1 align="center">Getting Started</h1>
 
 To get started with mining or validating in the subnet, please reference the following documentation:
-
+pip install git+https://github.com/nari-labs/dia.git
 <h3 align="center">Subnet Documentation</h3>
  
 <h4 align="center">| <a href="docs/subnet/subnet_architecture.md">Subnet Architecture</a> | <a href="docs/subnet/competitions.md">Competitions</a> | <a href="docs/subnet/roadmap.md">Roadmap</a> | <a href="docs/subnet/citations.md">Citations</a> |</h4>
